@@ -24,7 +24,7 @@ func UploadReplay(replay *model.StoredReplay, databaseName string) (bool, string
 		return false, "file is already stored in the local database."
 	}
 
-	coll := mongoClient.Database("TestCluster").Collection(databaseName)
+	coll := mongoClient.Database(databaseName).Collection(collectionName)
 
 	ctx2, cancel2 := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel2()
@@ -49,8 +49,8 @@ func UploadReplay(replay *model.StoredReplay, databaseName string) (bool, string
 	return true, ""
 }
 
-// ConnectMongo attemps to create the initial connection
-// The collection will be made if it is the first time.
+// ConnectMongo attemps to stablish the initial connection.
+// The collection will be created if it is the first time connecting.
 func ConnectMongo(URI string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

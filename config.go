@@ -36,5 +36,4 @@ func ReadConfig(cfg *Config) {
 	if err != nil {
 		panic(err)
 	}
-
 }

@@ -54,7 +54,7 @@ func AddReplay(c *fiber.Ctx) error {
 	storedReplay := new(model.StoredReplay)
 
 	if err := c.BodyParser(storedReplay); err != nil {
-		response := response{Status: 400, Message: "An error occurred when parsing the body."}
+		response := response{Status: 400, Message: "An error occurred while parsing the body."}
 		sendResponse(c, &response, 400)
 
 		return err
