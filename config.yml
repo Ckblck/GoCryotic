@@ -1,9 +1,0 @@
-# REST-API server configuration.
-server:
-  host: "localhost"
-  port: 3000
-
-# Database credentials.
-mongo-db:
-  uri: ""
-  db-name: ""
