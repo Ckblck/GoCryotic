@@ -5,8 +5,7 @@ import (
 	"reflect"
 	"regexp"
 
-	external "github.com/ckblck/gocryotic/saving"
-	local "github.com/ckblck/gocryotic/saving"
+	"github.com/ckblck/gocryotic/saving"
 	"github.com/ckblck/gocryotic/saving/model"
 	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
@@ -17,27 +16,43 @@ var zipFilePattern = regexp.MustCompile("REPLAY-([\\w\\d]*)-compressed\\.zip")
 // DBName is the name of the Mongo Database.
 var DBName string
 
-type response struct {
-	Status     int      `json:"status"`
-	Message    string   `json:"message,omitempty"`
-	Properties []string `json:"properties,omitempty"`
+// AddPlayer adds a player to the mongo database.
+// It is normally used when a replay starts, and it needs
+// to store the recorded players.
+func AddPlayer(c *fiber.Ctx) error {
+	player := new(model.RecordedPlayer)
+
+	if err := c.BodyParser(player); err != nil {
+		c.Status(400).JSON(fiber.Map{"status": "error", "message": "An error occurred while parsing the body.", "data": err})
+
+		return err
+	}
+
+	if !validateStruct(player, c) {
+		return nil
+	}
+
+	success, error := saving.SavePlayer(player, DBName)
+
+	if success {
+		return c.Status(201).JSON(fiber.Map{"status": "success", "message": "Successfully stored player into the database.", "data": player})
+	}
+
+	return c.Status(400).JSON(fiber.Map{"status": "error", "message": "An error occurred while trying to store the player into the database.", "data": error})
 }
 
 // GetReplays lists all the replays stored in the local database.
 func GetReplays(c *fiber.Ctx) error {
-	replays := local.RetrieveReplays()
+	replays := saving.RetrieveReplays()
 
-	response := response{Status: 201, Properties: replays}
-	c.SendStatus(201)
-
-	return c.JSON(response)
+	return c.Status(201).JSON(fiber.Map{"status": "success", "message": "Successfully fetched all the stored replays.", "data": replays})
 }
 
 // GetReplay downloads a specific replay.
 func GetReplay(c *fiber.Ctx) error {
 	fileName := "REPLAY-" + c.Params("id") + "-compressed.zip"
 
-	return c.Download(local.FolderPath+string(os.PathSeparator)+fileName, fileName)
+	return c.Download(saving.FolderPath+string(os.PathSeparator)+fileName, fileName)
 }
 
 // AddReplay adds a zipped replay to the local database.
@@ -45,8 +60,7 @@ func AddReplay(c *fiber.Ctx) error {
 	zippedReplay, err := c.FormFile("file")
 
 	if zippedReplay == nil || err != nil {
-		response := response{Status: 400, Message: "Body form-data with key 'file' expected but not received."}
-		sendResponse(c, &response, 400)
+		c.Status(400).JSON(fiber.Map{"status": "error", "message": "Body form-data with key 'file' expected but not received.", "data": err})
 
 		return err
 	}
@@ -54,8 +68,7 @@ func AddReplay(c *fiber.Ctx) error {
 	storedReplay := new(model.StoredReplay)
 
 	if err := c.BodyParser(storedReplay); err != nil {
-		response := response{Status: 400, Message: "An error occurred while parsing the body."}
-		sendResponse(c, &response, 400)
+		c.Status(400).JSON(fiber.Map{"status": "error", "message": "An error occurred while parsing the body.", "data": err})
 
 		return err
 	}
@@ -68,35 +81,29 @@ func AddReplay(c *fiber.Ctx) error {
 	var matchesRegex bool = zipFilePattern.MatchString(zipName)
 
 	if !matchesRegex {
-		response := response{Status: 400, Message: "File name: " + zipName + " does not match regex: " + zipFilePattern.String()}
-		sendResponse(c, &response, 400)
+		c.Status(400).JSON(fiber.Map{"status": "error", "message": "File name: " + zipName + " does not match regex: " + zipFilePattern.String(), "data": nil})
 
 		return nil
 	}
 
-	success, message := external.UploadReplay(storedReplay, DBName)
+	success, message := saving.UploadReplay(storedReplay, DBName)
 
 	if !success {
-		response := response{Status: 400, Message: "Could not save file: " + message}
-		sendResponse(c, &response, 400)
+		c.Status(400).JSON(fiber.Map{"status": "error", "message": "Could not save file: " + message, "data": nil})
 
 		return nil
 	}
 
 	replayID := zipFilePattern.FindStringSubmatch(zipName)[1]
-	err2 := c.SaveFile(zippedReplay, local.FolderPath+string(os.PathSeparator)+zipName)
+	err = c.SaveFile(zippedReplay, saving.FolderPath+string(os.PathSeparator)+zipName)
 
-	if err2 != nil {
-		response := response{Status: 400, Message: "Could not save file: " + zipName + ". (internal error)", Properties: []string{replayID}}
-		sendResponse(c, &response, 400)
+	if err != nil {
+		c.Status(400).JSON(fiber.Map{"status": "error", "message": "Could not save file: " + zipName + ". (internal error)", "data": err})
 
-		return err2
+		return err
 	}
 
-	response := response{Status: 201, Message: "Successfully saved file: " + zipName + ".", Properties: []string{replayID}}
-	sendResponse(c, &response, 201)
-
-	return nil
+	return c.Status(201).JSON(fiber.Map{"status": "success", "message": "Successfully saved file: " + zipName + ".", "data": replayID})
 }
 
 // DeleteReplay tries to delete a zipped file from the database.
@@ -104,25 +111,16 @@ func DeleteReplay(c *fiber.Ctx) error {
 	replayName := c.Params("id")
 	replayName = "REPLAY-" + replayName + "-compressed.zip"
 
-	success := local.DeleteReplay(replayName)
+	success := saving.DeleteReplay(replayName)
 
 	if success {
-		response := response{Status: 201, Message: "Successfully deleted file: " + replayName + "."}
-
-		return c.JSON(response)
+		return c.Status(201).JSON(fiber.Map{"status": "success", "message": "Successfully deleted file: " + replayName + ".", "data": replayName})
 	}
 
-	response := response{Status: 400, Message: "Could not delete file: " + replayName + "."}
-
-	return c.JSON(response)
+	return c.Status(400).JSON(fiber.Map{"status": "error", "message": "Could not delete file: " + replayName + ".", "data": replayName})
 }
 
-func sendResponse(c *fiber.Ctx, r *response, statusCode int) {
-	c.SendStatus(statusCode)
-	c.JSON(r)
-}
-
-func validateStruct(s *model.StoredReplay, c *fiber.Ctx) bool {
+func validateStruct(s interface{}, c *fiber.Ctx) bool {
 	validate := validator.New()
 	err := validate.Struct(s)
 
@@ -136,8 +134,7 @@ func validateStruct(s *model.StoredReplay, c *fiber.Ctx) bool {
 			properties[i] = property
 		}
 
-		response := response{Status: 400, Message: "Incorrect body received.", Properties: properties}
-		sendResponse(c, &response, 400)
+		c.Status(400).JSON(fiber.Map{"status": "error", "message": "Incorrect body received.", "data": properties})
 
 		return false
 	}

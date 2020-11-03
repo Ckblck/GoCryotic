@@ -38,6 +38,7 @@ func routes(app *fiber.App) {
 	app.Get("/api/v1/replay", handler.GetReplays)
 	app.Get("/api/v1/replay/:id", handler.GetReplay)
 	app.Post("/api/v1/replay", handler.AddReplay)
+	app.Post("/api/v1/player", handler.AddPlayer)
 	app.Delete("/api/v1/replay/:id", handler.DeleteReplay)
 }
 
