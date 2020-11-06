@@ -20,9 +20,10 @@ const playersCollection = "cryotic_players"
 // UploadReplay saves the replay information to Mongo DB.
 // It will return true if the uploading was a success, false otherwise.
 // A message will be also returned explaining what gone wrong.
-func UploadReplay(replay *model.StoredReplay, databaseName string) (bool, string) {
+// A status code will be returned.
+func UploadReplay(replay *model.StoredReplay, databaseName string) (bool, string, int) {
 	if replayExists(replay) {
-		return false, "file is already stored in the local database."
+		return false, "file is already stored in the local database.", 409
 	}
 
 	coll := mongoClient.Database(databaseName).Collection(replaysCollection)
@@ -32,8 +33,8 @@ func UploadReplay(replay *model.StoredReplay, databaseName string) (bool, string
 
 	value := coll.FindOne(ctx, bson.M{"identifier": replay.ReplayID})
 
-	if value.Err() == nil { // Replay already added.
-		return false, "replay is already stored in the external database."
+	if value.Err() == nil {
+		return false, "replay is already stored in the external database.", 409
 	}
 
 	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
@@ -44,10 +45,10 @@ func UploadReplay(replay *model.StoredReplay, databaseName string) (bool, string
 	if err != nil {
 		log.Fatal(err)
 
-		return false, "an error occurred when inserting the replay into the external database."
+		return false, "an error occurred when inserting the replay into the external database.", 500
 	}
 
-	return true, ""
+	return true, "", 201
 }
 
 // ConnectMongo attemps to stablish the initial connection.

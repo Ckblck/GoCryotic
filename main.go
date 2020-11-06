@@ -24,13 +24,14 @@ func main() {
 		panic(err)
 	}
 
-	routes(app)
+	Routes(app)
 	time.AfterFunc(500*time.Millisecond, print)
 
 	log.Fatal(app.Listen(config.Server.Host + ":" + config.Server.Port))
 }
 
-func routes(app *fiber.App) {
+// Routes creates the REST-API routes.
+func Routes(app *fiber.App) {
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("👋")
 	})

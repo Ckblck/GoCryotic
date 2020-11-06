@@ -11,14 +11,13 @@ const FolderPath = "." + string(os.PathSeparator) + "replays-storage"
 // contain all the zipped replay names.
 func RetrieveReplays() []string {
 	folder, err := os.Open(FolderPath)
+	defer folder.Close()
 
 	if err != nil {
-		panic(err)
+		return nil
 	}
 
 	files, err := folder.Readdirnames(-1)
-
-	defer folder.Close()
 
 	return files
 }
