@@ -1,0 +1,474 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "A simple REST-API made in Go.",
+    "title": "Cryotic",
+    "version": "1.0.0"
+  },
+  "tags": [
+    {
+      "name": "replay",
+      "description": "Replay storage operations."
+    },
+    {
+      "name": "player",
+      "description": "Player game tracking operations."
+    }
+  ],
+  "basePath": "/",
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "👋",
+        "responses": {
+          "200": {
+            "description": "The API is working!"
+          }
+        }
+      }
+    },
+    "/api/v1/player": {
+      "post": {
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "parameters": [
+          {
+            "name": "nickname",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "description": "Player's username."
+          },
+          {
+            "name": "replay_id",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "description": "Replay ID."
+          }
+        ],
+        "tags": [
+          "player"
+        ],
+        "summary": "Saves a replay ID to the player's replays in which he took part in.",
+        "description": "Uploads such replay ID to the player's replays array.",
+        "responses": {
+          "201": {
+            "description": "Successfully stored player's replay ID.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": "username"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Sucessfully stored player into the database."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Could not insert the ID into the database.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": "(error information describing what happened)"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "An error occurred while trying to store the player into the database."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Incorrect form-data received.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "Key 'nickname' of type 'string' required but not received."
+                  }
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Incorrect form-data received."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal error occurred while parsing the form-data.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": "(error information describing what happened)"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "An error occurred while parsing the body."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/replay/": {
+      "get": {
+        "tags": [
+          "replay"
+        ],
+        "summary": "Gets all the replays from the local file storage.",
+        "description": "Returns an array containing all the names of the locally stored replays.",
+        "responses": {
+          "201": {
+            "description": "Successfully fetched all the stored replays.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "REPLAY-abcd-compressed.zip"
+                  }
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Successfully fetched all the stored replays."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Internal error occurred when fetching the locally stored replays.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": null
+                },
+                "message": {
+                  "type": "string",
+                  "example": "An error occurred when retrieving the replays from the local database."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "replay"
+        ],
+        "summary": "Replay uploading.",
+        "description": "Uploads a replay with given parameters (locally and mongo database). These parameters should always be accurate. Giving wrong parameters **will** lead to problems.",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "parameters": [
+          {
+            "name": "file",
+            "in": "formData",
+            "type": "file",
+            "required": true,
+            "description": "Compressed replay file which contains map and `.cryotic` file."
+          },
+          {
+            "name": "world_name",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "description": "Original world name, i.e. 'world'"
+          },
+          {
+            "name": "identifier",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "description": "eWsz"
+          },
+          {
+            "name": "full_world_name",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "description": "Combination of world_name + identifier, separated by '-' i.e. 'world-eWsz'"
+          },
+          {
+            "name": "epoch",
+            "in": "formData",
+            "type": "integer",
+            "format": "uint64",
+            "required": true,
+            "description": "Date of the start of the replay in epoch."
+          },
+          {
+            "name": "ticks",
+            "in": "formData",
+            "type": "integer",
+            "format": "uint64",
+            "required": true,
+            "description": "Last tick of the replay, i.e. replay has 1,2,4, ticks = 4."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully saved the replay.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": "eWsz"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Successfully saved file: REPLAY-eWsz-compressed.zip."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Could not save the file locally. (error occurred). Or an error occurred when parsing the form-data.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": "(error information describing what happened)"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Could not save file: REPLAY-eWsz-compressed.zip. (internal error)."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "File attached does not match regex.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": null
+                },
+                "message": {
+                  "type": "string",
+                  "example": "File name: REPLAY-eWsz-compressed.zip does not match regex: REPLAY-([\\w\\d]*)-compressed\\.zip"
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "File is already stored either locally (file already exists with that name) or remotely (mongo).",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": null
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Could not save file: replay is already stored in the external database."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Incorrect form-data received. Or file not attached.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "Key 'identifier' of type 'string' required but not received."
+                  }
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Incorrect form-data received."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Could not insert the file into the external database (error occurred).",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": null
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Could not save file: an error occurred when inserting the replay into the external database."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/replay/{replayId}": {
+      "get": {
+        "tags": [
+          "replay"
+        ],
+        "summary": "Find a replay by ID.",
+        "description": "Returns a single replay.",
+        "produces": [
+          "application/zip"
+        ],
+        "parameters": [
+          {
+            "name": "replayId",
+            "in": "path",
+            "description": "ID of the replay to download.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully downloaded the replay requested in its zip format.",
+            "schema": {
+              "type": "file",
+              "format": "binary"
+            }
+          },
+          "404": {
+            "description": "The replay requested could not be found in the local storage.",
+            "schema": {
+              "type": "string",
+              "example": "sendfile: file .\\replays-storage\\REPLAY-{replayId}-compressed.zip not found"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "replay"
+        ],
+        "summary": "Deletes a replay.",
+        "description": "Deletion occurs in the local storage (file deletion) and in the Mongo database (deletion from players replays).",
+        "parameters": [
+          {
+            "name": "replayId",
+            "in": "path",
+            "description": "ID of the replay to delete.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file was successfully deleted.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": "REPLAY-{replayId}-compressed.zip"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Successfully deleted file: REPLAY-{replayId}-compressed.zip."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Could not delete or find the file.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": "REPLAY-{replayId}-compressed.zip"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Could not delete file: REPLAY-{replayId}-compressed.zip"
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
