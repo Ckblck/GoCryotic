@@ -66,7 +66,7 @@ func TestGetReplaysRequest(t *testing.T) {
 	resp := newResponse(app, "GET", "/api/v1/replay")
 
 	got := resp.StatusCode
-	want := 201
+	want := 400
 
 	if got != want {
 		t.Errorf("got %v want %v", got, want)
@@ -98,7 +98,7 @@ func TestPostReplayRequest(t *testing.T) {
 	resp := sendRequest(app, request)
 
 	got := resp.StatusCode
-	want := 400
+	want := 422
 
 	if got != want {
 		t.Errorf("got %v want %v", got, want)
