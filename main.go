@@ -5,9 +5,8 @@ import (
 	"log"
 	"time"
 
-	handler "github.com/ckblck/gocryotic/network"
-	external "github.com/ckblck/gocryotic/saving"
-	local "github.com/ckblck/gocryotic/saving"
+	"github.com/ckblck/gocryotic/network"
+	"github.com/ckblck/gocryotic/saving"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -15,10 +14,10 @@ func main() {
 	config := Config{}
 	ReadConfig(&config)
 
-	handler.DBName = config.Database.DatabaseName
+	network.DBName = config.Database.DatabaseName
 	app := fiber.New()
-	err := local.CreateLocalDatabase()
-	external.ConnectMongo(config.Database.URI)
+	err := saving.CreateLocalDatabase()
+	saving.ConnectMongo(config.Database.URI)
 
 	if err != nil {
 		panic(err)
@@ -36,11 +35,11 @@ func Routes(app *fiber.App) {
 		return c.SendString("👋")
 	})
 
-	app.Get("/api/v1/replay", handler.GetReplays)
-	app.Get("/api/v1/replay/:id", handler.GetReplay)
-	app.Post("/api/v1/replay", handler.AddReplay)
-	app.Post("/api/v1/player", handler.AddPlayer)
-	app.Delete("/api/v1/replay/:id", handler.DeleteReplay)
+	app.Get("/api/v1/replay", network.GetReplays)
+	app.Get("/api/v1/replay/:id", network.GetReplay)
+	app.Post("/api/v1/replay", network.AddReplay)
+	app.Post("/api/v1/player", network.AddPlayer)
+	app.Delete("/api/v1/replay/:id", network.DeleteReplay)
 }
 
 func print() {

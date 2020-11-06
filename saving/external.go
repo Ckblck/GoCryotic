@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/ckblck/gocryotic/saving/model"
@@ -81,7 +82,9 @@ func SavePlayer(player *model.RecordedPlayer, databaseName string) (bool, error)
 
 	if value.Err() == nil { // Player already stored, push to its array.
 		filter := bson.M{"nick": player.Nickname}
-		update := bson.M{"$push": bson.M{"replays": player.ReplayID}}
+		update := bson.M{
+			"$push": bson.M{"replays": player.ReplayID},
+		}
 
 		coll.UpdateOne(ctx, filter, update)
 
@@ -103,6 +106,50 @@ func SavePlayer(player *model.RecordedPlayer, databaseName string) (bool, error)
 	}
 
 	return true, nil
+}
+
+// DeleteReplayFromCollection will attemp to delete a replay from the "cryotic_replays" collection.
+// A string is returning informing the result of the operation.
+func DeleteReplayFromCollection(replayID, databaseName string) string {
+	coll := mongoClient.Database(databaseName).Collection(replaysCollection)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	filter := bson.M{"identifier": replayID}
+
+	result, err := coll.DeleteOne(ctx, filter)
+
+	if err != nil {
+		return "Could not remove such replayID from the replays collection. Error: " + err.Error()
+	}
+
+	if result.DeletedCount == 0 {
+		return "No replay was removed from the collection, as there was not any."
+	}
+
+	return "Successfully removed replayID from the replays collection."
+}
+
+// DeleteReplayFromPlayersTrackers will attemp to delete the from the "cryotic_players" collection.
+// It will search for all the players which participated with such replayID and remove it.
+// A string is returning informing the result of the operation.
+func DeleteReplayFromPlayersTrackers(replayID, databaseName string) string {
+	coll := mongoClient.Database(databaseName).Collection(playersCollection)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	filter := bson.M{"replays": replayID}
+	result, err := coll.DeleteMany(ctx, filter)
+
+	if err != nil {
+		return "Could not remove such replayID from player trackers. Error: " + err.Error()
+	}
+
+	if result.DeletedCount == 0 {
+		return "No replay was removed from player trackers, as there was not any."
+	}
+
+	return "Successfully removed " + strconv.FormatInt(result.DeletedCount, 10) + " replays from player trackers."
 }
 
 func replayExists(replay *model.StoredReplay) bool {

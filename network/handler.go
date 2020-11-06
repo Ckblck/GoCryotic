@@ -100,18 +100,20 @@ func AddReplay(c *fiber.Ctx) error {
 
 // DeleteReplay tries to delete a zipped file from the database.
 func DeleteReplay(c *fiber.Ctx) error {
-	replayName := c.Params("id")
-	replayName = "REPLAY-" + replayName + "-compressed.zip"
-
-	// TODO Delete from player and croytic databases.
+	replayID := c.Params("id")
+	replayName := "REPLAY-" + replayID + "-compressed.zip"
 
 	success := saving.DeleteReplay(replayName)
+	resultMessage1 := saving.DeleteReplayFromCollection(replayID, DBName)
+	resultMessage2 := saving.DeleteReplayFromPlayersTrackers(replayID, DBName)
+
+	data := [2]string{resultMessage1, resultMessage2}
 
 	if success {
-		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "Successfully deleted file: " + replayName + ".", "data": replayName})
+		return c.Status(200).JSON(fiber.Map{"status": "success", "message": "Successfully deleted file: " + replayName + ".", "data": data})
 	}
 
-	return c.Status(400).JSON(fiber.Map{"status": "error", "message": "Could not delete file: " + replayName + ".", "data": replayName})
+	return c.Status(400).JSON(fiber.Map{"status": "error", "message": "Could not delete file: " + replayName + ".", "data": data})
 }
 
 func validateStruct(s interface{}, c *fiber.Ctx) bool {

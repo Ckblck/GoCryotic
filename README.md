@@ -10,7 +10,7 @@
 All of these is managed by the plugin itself, [Cryotic](https://github.com/Ckblck/Cryotic).
 
 ## API Documentation
-You can visit the [API Documentation](https://ckblck.github.io/GoCryotic/index.html) which explains how are the requests done, and what responses do they send.
+You can visit the [API Documentation](https://ckblck.github.io/GoCryotic/index.html) which explains how the requests are done, and what responses do they send.
 
 ## Releases
 
