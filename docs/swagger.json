@@ -1,9 +1,9 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "A simple REST-API made in Go.",
-    "title": "Cryotic",
-    "version": "1.0.0"
+    "description": "A REST-API made in Go for the Cryotic replay-system.",
+    "title": "GoCryotic",
+    "version": "1.0.1"
   },
   "tags": [
     {
@@ -156,9 +156,12 @@
                 "data": {
                   "type": "array",
                   "items": {
-                    "type": "string",
-                    "example": "REPLAY-abcd-compressed.zip"
-                  }
+                    "type": "string"
+                  },
+                  "example": [
+                    "REPLAY-Hnhj-compressed.zip",
+                    "REPLAY-jSaz-compressed.zip"
+                  ]
                 },
                 "message": {
                   "type": "string",
@@ -337,9 +340,12 @@
                 "data": {
                   "type": "array",
                   "items": {
-                    "type": "string",
-                    "example": "Key 'identifier' of type 'string' required but not received."
-                  }
+                    "type": "string"
+                  },
+                  "example": [
+                    "Key 'identifier' of type 'string' required but not received.",
+                    "Key 'ticks' of type 'uint64' required but not received."
+                  ]
                 },
                 "message": {
                   "type": "string",
@@ -416,7 +422,7 @@
           "replay"
         ],
         "summary": "Deletes a replay.",
-        "description": "Deletion occurs in the local storage (file deletion) and in the Mongo database (deletion from players replays).",
+        "description": "Deletion occurs in the local storage (file deletion) and in the Mongo database (deletion from players replays and replays collections).",
         "parameters": [
           {
             "name": "replayId",
@@ -428,13 +434,19 @@
         ],
         "responses": {
           "200": {
-            "description": "The file was successfully deleted.",
+            "description": "The replay was successfully deleted. **Note**: status code **200** will be returned ignoring the result of the mongo deletions.",
             "schema": {
               "type": "object",
               "properties": {
                 "data": {
-                  "type": "string",
-                  "example": "REPLAY-{replayId}-compressed.zip"
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example": [
+                    "Successfully removed replayID from the replays collection.",
+                    "Successfully removed 2 replayIDs from player trackers."
+                  ]
                 },
                 "message": {
                   "type": "string",
