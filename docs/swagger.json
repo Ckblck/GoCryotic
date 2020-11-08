@@ -3,7 +3,7 @@
   "info": {
     "description": "A REST-API made in Go for the Cryotic replay-system.",
     "title": "GoCryotic",
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "tags": [
     {
@@ -136,6 +136,74 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/player/{name}": {
+      "get": {
+        "tags": [
+          "player"
+        ],
+        "summary": "Gets all the replays in which the player has participated.",
+        "description": "Returns an array of replay IDs.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "type": "string",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved replays from the player.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example": [
+                    "aTgS",
+                    "eWeO"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Successfully retrieved 2 replays from player {name}."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Could not found such player in the database.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": null
+                },
+                "message": {
+                  "type": "string",
+                  "example": "The requested player could not be found in the database."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Internal server error when decoding the document."
           }
         }
       }

@@ -16,6 +16,19 @@ var zipFilePattern = regexp.MustCompile("REPLAY-([\\w\\d]*)-compressed\\.zip")
 // DBName is the name of the Mongo Database.
 var DBName string
 
+// GetPlayerReplays handles the GET request of getting a player's replays.
+func GetPlayerReplays(c *fiber.Ctx) error {
+	playerName := c.Params("name")
+	statusCode, message, replays := saving.FetchPlayerReplays(playerName, DBName)
+	status := "success"
+
+	if statusCode != 200 {
+		status = "error"
+	}
+
+	return c.Status(statusCode).JSON(fiber.Map{"status": status, "message": message, "data": replays})
+}
+
 // AddPlayer adds a player to the mongo database.
 // It is normally used when a replay starts, and it needs
 // to store the recorded players.

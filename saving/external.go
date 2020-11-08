@@ -18,9 +18,40 @@ var mongoClient *mongo.Client
 const replaysCollection = "cryotic_replays"
 const playersCollection = "cryotic_players"
 
+// FetchPlayerReplays returns a string array of the replays
+// that a certain player has. It will return false if the retrieving failed.
+func FetchPlayerReplays(playerName, databaseName string) (int, string, []string) {
+	type player struct {
+		Nickname string   `bson:"nick"`
+		Replays  []string `bson:"replays"`
+	}
+
+	playerDocument := new(player)
+	coll := mongoClient.Database(databaseName).Collection(playersCollection)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	filter := bson.M{"nick": playerName}
+	value := coll.FindOne(ctx, filter)
+
+	if value.Err() == mongo.ErrNoDocuments {
+		return 404, "The requested player could not be found in the database.", nil
+	}
+
+	err := value.Decode(playerDocument)
+
+	if err != nil {
+		return 501, "Could not decode document. Internal server error.", nil
+	}
+
+	message := "Successfully retrieved " + strconv.Itoa(len(playerDocument.Replays)) + " replays from player " + playerName + "."
+
+	return 200, message, playerDocument.Replays
+}
+
 // UploadReplay saves the replay information to Mongo DB.
 // It will return true if the uploading was a success, false otherwise.
-// A message will be also returned explaining what gone wrong.
+// A message will also be returned explaining what gone wrong.
 // A status code will be returned.
 func UploadReplay(replay *model.StoredReplay, databaseName string) (bool, string, int) {
 	if replayExists(replay) {
@@ -108,7 +139,7 @@ func SavePlayer(player *model.RecordedPlayer, databaseName string) (bool, error)
 	return true, nil
 }
 
-// DeleteReplayFromCollection will attemp to delete a replay from the "cryotic_replays" collection.
+// DeleteReplayFromCollection will try to delete a replay from the "cryotic_replays" collection.
 // A string is returning informing the result of the operation.
 func DeleteReplayFromCollection(replayID, databaseName string) string {
 	coll := mongoClient.Database(databaseName).Collection(replaysCollection)
@@ -130,7 +161,7 @@ func DeleteReplayFromCollection(replayID, databaseName string) string {
 	return "Successfully removed replayID from the replays collection."
 }
 
-// DeleteReplayFromPlayersTrackers will attemp to delete the from the "cryotic_players" collection.
+// DeleteReplayFromPlayersTrackers will try to delete the from the "cryotic_players" collection.
 // It will search for all the players which participated with such replayID and remove it.
 // A string is returning informing the result of the operation.
 func DeleteReplayFromPlayersTrackers(replayID, databaseName string) string {
@@ -139,17 +170,18 @@ func DeleteReplayFromPlayersTrackers(replayID, databaseName string) string {
 	defer cancel()
 
 	filter := bson.M{"replays": replayID}
-	result, err := coll.DeleteMany(ctx, filter)
+	update := bson.M{"$pull": filter}
+	result, err := coll.UpdateMany(ctx, filter, update)
 
 	if err != nil {
 		return "Could not remove such replayID from player trackers. Error: " + err.Error()
 	}
 
-	if result.DeletedCount == 0 {
+	if result.ModifiedCount == 0 {
 		return "No replay was removed from player trackers, as there was not any."
 	}
 
-	return "Successfully removed " + strconv.FormatInt(result.DeletedCount, 10) + " replays from player trackers."
+	return "Successfully removed " + strconv.FormatInt(result.ModifiedCount, 10) + " replays from player trackers."
 }
 
 func replayExists(replay *model.StoredReplay) bool {
