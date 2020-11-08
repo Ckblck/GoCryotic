@@ -202,7 +202,7 @@
               }
             }
           },
-          "501": {
+          "500": {
             "description": "Internal server error when decoding the document."
           }
         }

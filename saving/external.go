@@ -41,7 +41,7 @@ func FetchPlayerReplays(playerName, databaseName string) (int, string, []string)
 	err := value.Decode(playerDocument)
 
 	if err != nil {
-		return 501, "Could not decode document. Internal server error.", nil
+		return 500, "Could not decode document. Internal server error.", nil
 	}
 
 	message := "Successfully retrieved " + strconv.Itoa(len(playerDocument.Replays)) + " replays from player " + playerName + "."
