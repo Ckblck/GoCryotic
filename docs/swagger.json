@@ -146,7 +146,7 @@
           "player"
         ],
         "summary": "Gets all the replays in which the player has participated.",
-        "description": "Returns an array of replay IDs.",
+        "description": "Returns an array of replays with information.",
         "parameters": [
           {
             "name": "name",
@@ -164,16 +164,34 @@
                 "data": {
                   "type": "array",
                   "items": {
-                    "type": "string"
-                  },
-                  "example": [
-                    "aTgS",
-                    "eWeO"
-                  ]
+                    "type": "object",
+                    "properties": {
+                      "WorldName": {
+                        "type": "string",
+                        "example": "world"
+                      },
+                      "ReplayID": {
+                        "type": "string",
+                        "example": "fSab"
+                      },
+                      "FullWorldName": {
+                        "type": "string",
+                        "example": "world-fSab"
+                      },
+                      "EpochDate": {
+                        "type": "number",
+                        "example": 1234567890000
+                      },
+                      "MaxTicks": {
+                        "type": "number",
+                        "example": 5235
+                      }
+                    }
+                  }
                 },
                 "message": {
                   "type": "string",
-                  "example": "Successfully retrieved 2 replays from player {name}."
+                  "example": "Successfully retrieved 1 replays from player {name}."
                 },
                 "status": {
                   "type": "string",
@@ -202,8 +220,8 @@
               }
             }
           },
-          "500": {
-            "description": "Internal server error when decoding the document."
+          "501": {
+            "description": "Internal server error."
           }
         }
       }

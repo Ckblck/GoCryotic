@@ -20,7 +20,7 @@ const playersCollection = "cryotic_players"
 
 // FetchPlayerReplays returns a string array of the replays
 // that a certain player has. It will return false if the retrieving failed.
-func FetchPlayerReplays(playerName, databaseName string) (int, string, []string) {
+func FetchPlayerReplays(playerName, databaseName string) (int, string, []model.StoredReplay) {
 	type player struct {
 		Nickname string   `bson:"nick"`
 		Replays  []string `bson:"replays"`
@@ -44,9 +44,16 @@ func FetchPlayerReplays(playerName, databaseName string) (int, string, []string)
 		return 500, "Could not decode document. Internal server error.", nil
 	}
 
-	message := "Successfully retrieved " + strconv.Itoa(len(playerDocument.Replays)) + " replays from player " + playerName + "."
+	replaysIDs := playerDocument.Replays
+	success, replays := getReplay(databaseName, replaysIDs)
 
-	return 200, message, playerDocument.Replays
+	if !success {
+		return 500, "Internal server error occurred while parsing documents.", nil
+	}
+
+	message := "Successfully retrieved " + strconv.Itoa(len(replays)) + " replays from player " + playerName + "."
+
+	return 200, message, replays
 }
 
 // UploadReplay saves the replay information to Mongo DB.
@@ -182,6 +189,28 @@ func DeleteReplayFromPlayersTrackers(replayID, databaseName string) string {
 	}
 
 	return "Successfully removed " + strconv.FormatInt(result.ModifiedCount, 10) + " replays from player trackers."
+}
+
+func getReplay(databaseName string, replayIDs []string) (bool, []model.StoredReplay) {
+	coll := mongoClient.Database(databaseName).Collection(replaysCollection)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	filter := bson.M{"identifier": bson.M{"$in": replayIDs}}
+	cursor, err := coll.Find(ctx, filter)
+
+	if err != nil {
+		return false, nil
+	}
+
+	replay := make([]model.StoredReplay, 0)
+	err = cursor.All(ctx, &replay)
+
+	if err != nil {
+		return false, nil
+	}
+
+	return true, replay
 }
 
 func replayExists(replay *model.StoredReplay) bool {
