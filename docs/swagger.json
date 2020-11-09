@@ -220,7 +220,7 @@
               }
             }
           },
-          "501": {
+          "500": {
             "description": "Internal server error."
           }
         }
@@ -231,10 +231,10 @@
         "tags": [
           "replay"
         ],
-        "summary": "Gets all the replays from the local file storage.",
-        "description": "Returns an array containing all the names of the locally stored replays.",
+        "summary": "Gets all the replays from the external file storage.",
+        "description": "Returns an array containing all the names of the externally stored replays.",
         "responses": {
-          "201": {
+          "200": {
             "description": "Successfully fetched all the stored replays.",
             "schema": {
               "type": "object",
@@ -242,36 +242,47 @@
                 "data": {
                   "type": "array",
                   "items": {
-                    "type": "string"
-                  },
-                  "example": [
-                    "REPLAY-Hnhj-compressed.zip",
-                    "REPLAY-jSaz-compressed.zip"
-                  ]
+                    "type": "object",
+                    "properties": {
+                      "WorldName": {
+                        "example": "world"
+                      },
+                      "ReplayID": {
+                        "example": "xAqS"
+                      },
+                      "FullWorldName": {
+                        "example": "world-xAqS"
+                      },
+                      "EpochDate": {
+                        "example": 1234567890000
+                      },
+                      "MaxTicks": {
+                        "example": 5325
+                      }
+                    }
+                  }
                 },
                 "message": {
-                  "type": "string",
                   "example": "Successfully fetched all the stored replays."
                 },
                 "status": {
-                  "type": "string",
                   "example": "success"
                 }
               }
             }
           },
-          "400": {
-            "description": "Internal error occurred when fetching the locally stored replays.",
+          "500": {
+            "description": "Internal error occurred when fetching the stored replays.",
             "schema": {
               "type": "object",
               "properties": {
                 "data": {
                   "type": "string",
-                  "example": null
+                  "example": "(error describing what happened)"
                 },
                 "message": {
                   "type": "string",
-                  "example": "An error occurred when retrieving the replays from the local database."
+                  "example": "An error occurred when retrieving the replays from the database."
                 },
                 "status": {
                   "type": "string",
@@ -473,7 +484,7 @@
           "replay"
         ],
         "summary": "Find a replay by ID.",
-        "description": "Returns a single replay.",
+        "description": "Downloads the zip file of the replay and writes in the response its information.",
         "produces": [
           "application/zip"
         ],
@@ -490,15 +501,62 @@
           "200": {
             "description": "Successfully downloaded the replay requested in its zip format.",
             "schema": {
-              "type": "file",
-              "format": "binary"
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "WorldName": {
+                      "type": "string",
+                      "example": "world"
+                    },
+                    "ReplayID": {
+                      "type": "string",
+                      "example": "fSab"
+                    },
+                    "FullWorldName": {
+                      "type": "string",
+                      "example": "world-fSab"
+                    },
+                    "EpochDate": {
+                      "type": "number",
+                      "example": 1234567890000
+                    },
+                    "MaxTicks": {
+                      "type": "number",
+                      "example": 5235
+                    }
+                  }
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Successfully downloaded: REPLAY-fSab-compressed.zip"
+                },
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                }
+              }
             }
           },
           "404": {
-            "description": "The replay requested could not be found in the local storage.",
+            "description": "The replay requested could not be found in the local/mongo database.",
             "schema": {
-              "type": "string",
-              "example": "sendfile: file .\\replays-storage\\REPLAY-{replayId}-compressed.zip not found"
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "string",
+                  "example": "(error explaining what happened)"
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Replay information is not stored in the database."
+                },
+                "status": {
+                  "type": "string",
+                  "example": "error"
+                }
+              }
             }
           }
         }

@@ -203,14 +203,57 @@ func getReplay(databaseName string, replayIDs []string) (bool, []model.StoredRep
 		return false, nil
 	}
 
-	replay := make([]model.StoredReplay, 0)
-	err = cursor.All(ctx, &replay)
+	var replays []model.StoredReplay
+	err = cursor.All(ctx, &replays)
 
 	if err != nil {
 		return false, nil
 	}
 
-	return true, replay
+	return true, replays
+}
+
+// GetReplayWithID will try to retrieve a replay from the database.
+func GetReplayWithID(databaseName string, replayID string) (*model.StoredReplay, error) {
+	coll := mongoClient.Database(databaseName).Collection(replaysCollection)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	filter := bson.M{"identifier": replayID}
+	res := coll.FindOne(ctx, filter)
+
+	if res.Err() != nil {
+		return nil, res.Err()
+	}
+
+	replay := new(model.StoredReplay)
+
+	if err := res.Decode(replay); err != nil {
+		return replay, err
+	}
+
+	return replay, nil
+}
+
+func FetchReplays(databaseName string) ([]model.StoredReplay, error) {
+	coll := mongoClient.Database(databaseName).Collection(replaysCollection)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	filter := bson.D{}
+	cursor, err := coll.Find(ctx, filter)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var replays []model.StoredReplay
+
+	if err := cursor.All(ctx, &replays); err != nil {
+		return replays, err
+	}
+
+	return replays, nil
 }
 
 func replayExists(replay *model.StoredReplay) bool {
