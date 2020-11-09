@@ -63,30 +63,30 @@ func GetReplays(c *fiber.Ctx) error {
 	return c.Status(200).JSON(fiber.Map{"status": "success", "message": "Successfully fetched all the stored replays.", "data": replays})
 }
 
-// GetReplay downloads a specific replay.
-func GetReplay(c *fiber.Ctx) error {
+func DownloadReplay(c *fiber.Ctx) error {
 	replayID := c.Params("id")
 	fileName := "REPLAY-" + replayID + "-compressed.zip"
 
-	if saving.FileNotExists(saving.FolderPath + string(os.PathSeparator) + fileName) {
-		return c.Status(404).JSON(fiber.Map{"status": "error", "message": "Replay file does not exists locally.", "data": nil})
-	}
+	return c.Download(saving.FolderPath+string(os.PathSeparator)+fileName, fileName)
+}
+
+// GetReplay downloads a specific replay.
+func GetReplay(c *fiber.Ctx) error {
+	replayID := c.Params("id")
 
 	var status int = 200
 	var statusMsg string = "success"
-	var message string = "Successfully downloaded: " + fileName
+	var message string = "Successfully retrieved information."
 	var data interface{}
 
-	c.Download(saving.FolderPath+string(os.PathSeparator)+fileName, fileName)
-
-	err, replay := saving.GetReplayWithID(DBName, replayID)
+	replay, err := saving.GetReplayWithID(DBName, replayID)
 	data = replay
 
 	if err != nil {
 		status = 404
 		statusMsg = "error"
 		message = "Replay information is not stored in the database."
-		data = err
+		data = err.Error()
 	}
 
 	return c.Status(status).JSON(fiber.Map{"status": statusMsg, "message": message, "data": data})

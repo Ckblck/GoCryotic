@@ -214,7 +214,7 @@ func getReplay(databaseName string, replayIDs []string) (bool, []model.StoredRep
 }
 
 // GetReplayWithID will try to retrieve a replay from the database.
-func GetReplayWithID(databaseName string, replayID string) (*model.StoredReplay, error) {
+func GetReplayWithID(databaseName, replayID string) (*model.StoredReplay, error) {
 	coll := mongoClient.Database(databaseName).Collection(replaysCollection)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -229,7 +229,7 @@ func GetReplayWithID(databaseName string, replayID string) (*model.StoredReplay,
 	replay := new(model.StoredReplay)
 
 	if err := res.Decode(replay); err != nil {
-		return replay, err
+		return nil, err
 	}
 
 	return replay, nil

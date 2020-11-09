@@ -59,21 +59,6 @@ func TestAddPlayerRequest(t *testing.T) {
 
 }
 
-func TestGetReplaysRequest(t *testing.T) {
-	app := fiber.New()
-	app.Get("/api/v1/replay", network.GetReplays)
-
-	resp := newResponse(app, "GET", "/api/v1/replay")
-
-	got := resp.StatusCode
-	want := 400 // GitHub breaks this.
-
-	if got != 201 && got != want {
-		t.Errorf("got %v want %v", got, want)
-	}
-
-}
-
 func TestGetReplayByIDRequest(t *testing.T) {
 	app := fiber.New()
 	app.Get("/api/v1/replay/:id", network.GetReplay)
