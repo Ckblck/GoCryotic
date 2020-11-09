@@ -489,7 +489,7 @@
           {
             "name": "replayId",
             "in": "path",
-            "description": "ID of the replay to get information.",
+            "description": "ID of the replay to get information from.",
             "required": true,
             "type": "string"
           }
@@ -554,42 +554,6 @@
                   "example": "error"
                 }
               }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/replay/download/{replayId}": {
-      "get": {
-        "tags": [
-          "replay"
-        ],
-        "summary": "Downloads a replay by ID.",
-        "description": "Downloads, as an attachment, a specific replay.",
-        "produces": [
-          "application/zip"
-        ],
-        "parameters": [
-          {
-            "name": "replayId",
-            "in": "path",
-            "description": "ID of the replay to download.",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successfully downloaded the replay requested.",
-            "schema": {
-              "type": "file"
-            }
-          },
-          "404": {
-            "description": "The replay requested to be downloaded could not be found in the local database.",
-            "schema": {
-              "type": "string",
-              "example": "sendfile: file .\\replays-storage\\REPLAY-{replayId}-compressed.zip not found"
             }
           }
         }
@@ -660,6 +624,42 @@
                   "example": "error"
                 }
               }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/replay/download/{replayId}": {
+      "get": {
+        "tags": [
+          "replay"
+        ],
+        "summary": "Downloads a replay by ID.",
+        "description": "Downloads, as an attachment, a specific replay.",
+        "produces": [
+          "application/zip"
+        ],
+        "parameters": [
+          {
+            "name": "replayId",
+            "in": "path",
+            "description": "ID of the replay to download.",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully downloaded the replay requested.",
+            "schema": {
+              "type": "file"
+            }
+          },
+          "404": {
+            "description": "The replay requested to be downloaded could not be found in the local database.",
+            "schema": {
+              "type": "string",
+              "example": "sendfile: file .\\replays-storage\\REPLAY-{replayId}-compressed.zip not found"
             }
           }
         }
